@@ -1,6 +1,6 @@
 (ns advent-of-code-2022.utils
   (:require [clojure.java.io :as io]
-            [clojure.string :as s]))
+            [clojure.string :as str]))
 
 (defn read-input-as-string
   [file]
@@ -10,4 +10,4 @@
   [file]
   (->
     (slurp (io/resource file))
-    (s/split-lines)))
+    (str/split-lines)))
