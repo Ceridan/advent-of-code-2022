@@ -1,0 +1,22 @@
+### Clojure ###
+/target
+/classes
+/checkouts
+profiles.clj
+pom.xml
+pom.xml.asc
+*.jar
+*.class
+/.lein-*
+/.nrepl-port
+/.prepl-port
+out/
+
+### IDE ###
+.idea/
+.idea_modules/
+*.iml
+.vscode/
+
+### Misc ###
+.tool-versions
