@@ -2,27 +2,25 @@
   (:require [advent-of-code-2022.utils :refer [read-input-as-string]]
             [clojure.string :as str]))
 
-(defn- build-calories-vector
+(defn- parse-calories
   [data]
-  (loop [calories (str/split-lines data)
-         calories-by-elves []
-         current 0]
-    (let [calorie (first calories)]
-      (cond
-        (nil? calorie) (conj calories-by-elves current)
-        (= calorie "") (recur (rest calories) (conj calories-by-elves current) 0)
-        :else (recur (rest calories) calories-by-elves (+ current (Integer/parseInt calorie)))))))
+  (->> (str/split data #"\n\n")
+      (map str/split-lines)
+      (map #(remove str/blank? %))
+      (mapv (fn [vec] (mapv #(Integer/parseInt %) vec)))))
 
 (defn part1
   [data]
   (->> data
-       build-calories-vector
+       parse-calories
+       (map #(reduce + %))
        (apply max)))
 
 (defn part2
   [data]
   (->> data
-       build-calories-vector
+       parse-calories
+       (map #(reduce + %))
        (sort >)
        (take 3)
        (reduce +)))
