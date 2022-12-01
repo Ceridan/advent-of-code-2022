@@ -10,7 +10,7 @@
   data)
 
 (defn -main
-  [& args]
+  []
   (let [day "XX"
         data (read-input-as-string (str "day" day ".txt"))]
     (printf "Day %s, part 1: %s\n", day, (part1 data))
