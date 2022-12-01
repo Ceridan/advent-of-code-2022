@@ -7,7 +7,7 @@
   (->> (str/split data #"\n\n")
       (map str/split-lines)
       (map #(remove str/blank? %))
-      (mapv (fn [vec] (mapv #(Integer/parseInt %) vec)))))
+      (map (fn [cals] (map #(Integer/parseInt %) cals)))))
 
 (defn part1
   [data]
