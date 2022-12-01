@@ -10,4 +10,4 @@
   [file]
   (->
     (slurp (io/resource file))
-    (str/split-lines)))
+    str/split-lines))
