@@ -3,11 +3,11 @@
 
 (defn part1
   [data]
-  data)
+  nil)
 
 (defn part2
   [data]
-  data)
+  nil)
 
 (defn -main
   []
