@@ -11,10 +11,7 @@
 
 (defn- check-pair-intersection
   [pair include]
-  (let [l1 (first (first pair))
-        r1 (second (first pair))
-        l2 (first (second pair))
-        r2 (second (second pair))]
+  (let [[[l1 r1] [l2 r2]] pair]
     (cond
       (and (true? include) (<= l1 l2) (>= r1 r2)) 1
       (and (true? include) (<= l2 l1) (>= r2 r1)) 1
