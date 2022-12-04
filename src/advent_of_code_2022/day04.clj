@@ -3,11 +3,11 @@
 
 (defn- parse-pairs
   [data]
-  (let [nums (->> data
-                  (re-matches #"(\d+)-(\d+),(\d+)-(\d+)")
-                  rest
-                  (mapv #(Integer/parseInt %)))]
-    [[(get nums 0) (get nums 1)] [(get nums 2) (get nums 3)]]))
+  (->> data
+       (re-matches #"(\d+)-(\d+),(\d+)-(\d+)")
+       rest
+       (map #(Integer/parseInt %))
+       (partition 2)))
 
 (defn- check-pair-intersection
   [pair include]
@@ -39,4 +39,3 @@
         data (read-input-as-string-vector (str "day" day ".txt"))]
     (printf "Day %s, part 1: %s\n", day, (part1 data))
     (printf "Day %s, part 2: %s\n", day, (part2 data))))
-
