@@ -16,7 +16,6 @@
       (and (true? include) (<= l1 l2) (>= r1 r2)) 1
       (and (true? include) (<= l2 l1) (>= r2 r1)) 1
       (and (false? include) (<= l2 r1) (>= r2 l1)) 1
-      (and (false? include) (<= l1 r2) (>= r1 l2)) 1
       :else 0)))
 
 (defn part1
