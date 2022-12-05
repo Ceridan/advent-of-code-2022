@@ -63,7 +63,7 @@
         stacks (parse-stacks raw-stacks)
         instructions (parse-instructions raw-instructions)]
     (->> (process-instructions stacks instructions crane-type)
-         (into (sorted-map))                                                ;
+         (into (sorted-map))                                ;
          vals
          (map first)
          (apply str))))
@@ -82,28 +82,3 @@
         data (read-input-as-string-vector (str "day" day ".txt"))]
     (printf "Day %s, part 1: %s\n", day, (part1 data))
     (printf "Day %s, part 2: %s\n", day, (part2 data))))
-
-
-(def example-stacks "
-    [D]
-[N] [C]
-[Z] [M] [P]
- 1   2   3
-
-move 1 from 2 to 1
-move 3 from 1 to 3
-move 2 from 2 to 1
-move 1 from 1 to 2")
-
-
-(->> (parse-data (str/split-lines example-stacks))
-     first
-     parse-stacks)
-;
-;(part1 (str/split-lines example-stacks))
-;
-;(move {1 '(\N \Z), 2 '(\D \C \M), 3 '(\P)} (->Instruction 1 2 1))
-;
-;(into '(1 2 3) '(4))
-;
-;(into (sorted-map) {3 :a 1 :b 2 :c})
