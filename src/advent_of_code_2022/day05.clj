@@ -35,7 +35,7 @@
   [data]
   (->> data
        (partition-by #(str/blank? %))
-       (remove #(str/blank? (first %)))))
+       (remove #(= '("") %))))
 
 (defn- move
   [stacks instruction crane-type]
