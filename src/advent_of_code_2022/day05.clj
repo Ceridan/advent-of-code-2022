@@ -63,7 +63,7 @@
         stacks (parse-stacks raw-stacks)
         instructions (parse-instructions raw-instructions)]
     (->> (process-instructions stacks instructions crane-type)
-         (into (sorted-map))                                ;
+         (into (sorted-map))
          vals
          (map first)
          (apply str))))
