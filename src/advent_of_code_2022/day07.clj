@@ -15,18 +15,18 @@
          log data
          current-dir "/"]
     (if (empty? log)
-          dirs
-          (let [line (first log)
-                cd (second (re-matches #"\$ cd ([/.a-z]+)" line))
-                file (second (re-matches #"(\d+) .+" line))]
-            (cond
-              (some? file) (let [size (Integer/parseInt file)]
-                             (recur (assoc dirs current-dir (+ (get dirs current-dir 0) size)) (rest log) current-dir))
-              (some? cd) (case cd
-                           "/" (recur dirs (rest log) "/")
-                           ".." (recur dirs (rest log) (get-top-level-dir current-dir))
-                           (recur dirs (rest log) (if (= current-dir "/") (str "/" cd) (str current-dir "/" cd))))
-              :else (recur dirs (rest log) current-dir))))))
+      dirs
+      (let [line (first log)
+            cd (second (re-matches #"\$ cd ([/.a-z]+)" line))
+            file (second (re-matches #"(\d+) .+" line))]
+        (cond
+          (some? file) (let [size (Integer/parseInt file)]
+                         (recur (assoc dirs current-dir (+ (get dirs current-dir 0) size)) (rest log) current-dir))
+          (some? cd) (case cd
+                       "/" (recur dirs (rest log) "/")
+                       ".." (recur dirs (rest log) (get-top-level-dir current-dir))
+                       (recur dirs (rest log) (if (= current-dir "/") (str "/" cd) (str current-dir "/" cd))))
+          :else (recur dirs (rest log) current-dir))))))
 
 (defn- update-directory-sizes
   [dirs current-dir]
@@ -52,21 +52,21 @@
 (defn part1
   [data]
   (->> data
-      process-command-log
-      sum-directory-sizes
-      vals
-      (filter #(< % 100000))
-      (reduce +)))
+       process-command-log
+       sum-directory-sizes
+       vals
+       (filter #(< % 100000))
+       (reduce +)))
 
 (defn part2
   [data]
   (let [dirs (sum-directory-sizes (process-command-log data))
         unused-space (- 70000000 (get dirs "/"))
         required-space (- 30000000 unused-space)]
-  (->> (vals dirs)
-       (sort >)
-       (take-while #(> % required-space))
-       last)))
+    (->> (vals dirs)
+         (sort >)
+         (take-while #(> % required-space))
+         last)))
 
 (defn -main
   []

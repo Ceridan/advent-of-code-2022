@@ -4,8 +4,8 @@
 
 (deftest part1-test
   (testing "Part 1"
-    (is (= "abc" (part1 "abc")))))
+    (is (= nil (part1 "abc")))))
 
 (deftest part2-test
   (testing "Part 2"
-    (is (= "def" (part2 "def")))))
+    (is (= nil (part2 "def")))))
