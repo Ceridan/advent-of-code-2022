@@ -9,8 +9,8 @@
         visible (take-while #(> height %) candidates)
         visible-count (count visible)]
     (if (= (count candidates) visible-count)
-      [true visible-count]
-      [false (inc visible-count)])))
+      [1 visible-count]
+      [0 (inc visible-count)])))
 
 (defn- calculate-grid
   [grid]
@@ -30,9 +30,8 @@
   (->> data
        calculate-grid
        (map (fn [tree] (map first tree)))
-       (map (fn [tree] (reduce #(or %1 %2) tree)))
-       (filter true?)
-       count))
+       (map #(apply max %))
+       (reduce +)))
 
 (defn part2
   [data]
