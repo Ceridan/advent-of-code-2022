@@ -1,59 +1,43 @@
 (ns advent-of-code-2022.day08
   (:require [advent-of-code-2022.utils :refer [read-input-as-integer-grid]]))
 
-(defn- out-of-bounds?
-  [grid pos]
-  (let [[row-idx col-idx] pos
-        row-size (count grid)
-        col-size (count (get grid 0))]
-    (cond
-      (< row-idx 0) true
-      (>= row-idx row-size) true
-      (< col-idx 0) true
-      (>= col-idx col-size) true
-      :else false)))
+(defn- calculate-row
+  [idx row]
+  (let [row (vec row)
+        height (get row idx)
+        candidates (drop (inc idx) row)
+        visible (take-while #(> height %) candidates)
+        visible-count (count visible)]
+    (if (= (count candidates) visible-count)
+      [true visible-count]
+      [false (inc visible-count)])))
 
-(defn- calculate-tree-cover-in-direction
-  [grid pos next-pos-fn]
-  (let [[row-idx col-idx] pos
-        height (get (get grid row-idx) col-idx)]
-    (loop [grid grid
-           next-pos (next-pos-fn pos)
-           distance 0]
-      (if (out-of-bounds? grid next-pos)
-        (list nil distance)
-        (let [[next-row-idx next-col-idx] next-pos
-              next-height (get (get grid next-row-idx) next-col-idx)]
-          (if (>= next-height height)
-            (list next-pos (inc distance))
-            (recur grid (next-pos-fn next-pos) (inc distance))))))))
-
-(defn- process-tree-grid
+(defn- calculate-grid
   [grid]
-  (let [top-fn (fn [pos] (let [[row-idx col-idx] pos] (list (dec row-idx) col-idx)))
-        left-fn (fn [pos] (let [[row-idx col-idx] pos] (list row-idx (dec col-idx))))
-        bottom-fn (fn [pos] (let [[row-idx col-idx] pos] (list (inc row-idx) col-idx)))
-        right-fn (fn [pos] (let [[row-idx col-idx] pos] (list row-idx (inc col-idx))))]
+  (let [row-aligned-grid grid
+        col-aligned-grid (vec (apply map vector grid))
+        last-row-idx (dec (count grid))
+        last-col-idx (dec (count (get grid 0)))]
     (for [row-idx (range (count grid))
           col-idx (range (count (get grid 0)))]
-      [(calculate-tree-cover-in-direction grid (list row-idx col-idx) top-fn)
-       (calculate-tree-cover-in-direction grid (list row-idx col-idx) left-fn)
-       (calculate-tree-cover-in-direction grid (list row-idx col-idx) bottom-fn)
-       (calculate-tree-cover-in-direction grid (list row-idx col-idx) right-fn)])))
+      [(calculate-row (- last-row-idx row-idx) (reverse (get col-aligned-grid col-idx)))
+       (calculate-row (- last-col-idx col-idx) (reverse (get row-aligned-grid row-idx)))
+       (calculate-row row-idx (get col-aligned-grid col-idx))
+       (calculate-row col-idx (get row-aligned-grid row-idx))])))
 
 (defn part1
   [data]
   (->> data
-       process-tree-grid
+       calculate-grid
        (map (fn [tree] (map first tree)))
-       (map #(filter nil? %))
-       (remove empty?)
+       (map (fn [tree] (reduce #(or %1 %2) tree)))
+       (filter true?)
        count))
 
 (defn part2
   [data]
   (->> data
-       process-tree-grid
+       calculate-grid
        (map (fn [tree] (map second tree)))
        (map #(reduce * %))
        (apply max)))
