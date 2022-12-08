@@ -8,6 +8,14 @@
 
 (defn read-input-as-string-vector
   [file]
-  (->
-    (slurp (io/resource file))
-    str/split-lines))
+  (-> file
+      read-input-as-string
+      str/split-lines))
+
+(defn read-input-as-integer-grid
+  [file]
+  (->> file
+       read-input-as-string-vector
+       (map #(char-array %))
+       (mapv (fn [row] (let [zero (int \0)]
+                         (mapv #(- (int %) zero) row))))))
