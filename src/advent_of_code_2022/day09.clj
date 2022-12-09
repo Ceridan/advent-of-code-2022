@@ -20,9 +20,13 @@
       (let [[nhx nhy] (case dir "U" [hx (inc hy)] "R" [(inc hx) hy] "D" [hx (dec hy)] "L" [(dec hx) hy])
             ntx (if (= nhx tx) tx (+ tx (/ (- nhx tx) (abs (- nhx tx)))))
             nty (if (= nhy ty) ty (+ ty (/ (- nhy ty) (abs (- nhy ty)))))]
-        (if
+        (cond
           (and (<= (abs (- nhx tx)) 1) (<= (abs (- nhy ty)) 1)) (recur visited [nhx nhy] [tx ty] (dec val))
-          (recur (conj visited [ntx nty]) [nhx nhy] [ntx nty] (dec val))
+          (and (= nhx tx) (> nhy ty)) [(into visited (map #(vector ntx %) (range nty (+ nty val)))) [nhx (+ nhy (dec val))] [ntx (+ nty (dec val))]]
+          (and (> nhx tx) (= nhy ty)) [(into visited (map #(vector % nty) (range ntx (+ ntx val)))) [(+ nhx (dec val)) nhy] [(+ ntx (dec val)) nty]]
+          (and (= nhx tx) (< nhy ty)) [(into visited (map #(vector ntx %) (range nty (- nty val) -1))) [nhx (- nhy (dec val))] [ntx (- nty (dec val))]]
+          (and (< nhx tx) (= nhy ty)) [(into visited (map #(vector % nty) (range ntx (- ntx val) -1))) [(- nhx (dec val)) nhy] [(- ntx (dec val)) nty]]
+          :else (recur (conj visited [ntx nty]) [nhx nhy] [ntx nty] (dec val))
           )
         ))
       )))
@@ -58,9 +62,6 @@
                            "L 5"
                            "R 2"])
 
-(parse-instructions instructions-example)
 
-(range 5 2 -1)
-(mod 1 2)
 
 (part1 instructions-example)
