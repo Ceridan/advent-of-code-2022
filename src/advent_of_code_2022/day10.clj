@@ -21,8 +21,7 @@
           new-strength (if (= (mod cycle 40) 20) (+ strength (* X cycle)) strength)]
       (if (= cycle 220)
         new-strength
-        (recur (rest cycles) (+ X num) new-strength))
-      )))
+        (recur (rest cycles) (+ X num) new-strength)))))
 
 (defn- calculate-CRT
   [cycles]
