@@ -62,4 +62,4 @@
   (let [day "10"
         data (read-input-as-string (str "day" day ".txt"))]
     (printf "Day %s, part 1: %s\n", day, (part1 data))
-    (printf "Day %s, part 2: %s\n", day, (part2 data))))
+    (printf "Day %s, part 2: %s\n", day, (str/replace (part2 data) "." " "))))
