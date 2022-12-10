@@ -12,7 +12,7 @@
                    str/trim
                    (str/split #" "))))
 
-(defn- process-cycles
+(defn- calculate-signal-strength
   [cycles]
   (loop [cycles cycles
          X 1
@@ -24,15 +24,39 @@
         (recur (rest cycles) (+ X num) new-strength))
       )))
 
+(defn- calculate-CRT
+  [cycles]
+  (loop [cycles cycles
+         X 1
+         CRT []]
+    (let [[cycle num] (first cycles)
+          col-idx (mod (dec cycle) 40)
+          ch (if (contains? #{(dec X) X (inc X)} col-idx) \# \.)]
+      (if (= cycle 240)
+        (conj CRT ch)
+        (recur (rest cycles) (+ X num) (conj CRT ch))))))
+
+(defn- print-CRT
+  [CRT]
+  (str "\n"
+       (->> CRT
+            (partition 40)
+            (map #(apply str %))
+            (str/join "\n"))
+       "\n"))
+
 (defn part1
   [data]
   (-> data
       parse-cpu-cycles
-      process-cycles))
+      calculate-signal-strength))
 
 (defn part2
   [data]
-  nil)
+  (->> data
+       parse-cpu-cycles
+       calculate-CRT
+       print-CRT))
 
 (defn -main
   []
