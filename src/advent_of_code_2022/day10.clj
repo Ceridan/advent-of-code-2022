@@ -30,7 +30,7 @@
          CRT []]
     (let [[cycle num] (first cycles)
           col-idx (mod (dec cycle) 40)
-          ch (if (contains? #{(dec X) X (inc X)} col-idx) \# \.)]
+          ch (if (<= (abs (- X col-idx)) 1) \# \.)]
       (if (= cycle 240)
         (conj CRT ch)
         (recur (rest cycles) (+ X num) (conj CRT ch))))))
