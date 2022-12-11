@@ -73,14 +73,14 @@
 
 (defn part1
   [data]
-  (let [monkeys (parse-monkeys data (fn [item] (quot item 3)))]
+  (let [monkeys (parse-monkeys data #(quot % 3))]
     (->> (process-all-monkeys 20 monkeys)
          calculate-monkey-business)))
 
 (defn part2
   [data]
   (let [divisor (reduce * (parse-all-divisors data))
-        monkeys (parse-monkeys data (fn [item] (mod item divisor)))]
+        monkeys (parse-monkeys data #(mod % divisor))]
     (->> (process-all-monkeys 10000 monkeys)
          calculate-monkey-business)))
 
