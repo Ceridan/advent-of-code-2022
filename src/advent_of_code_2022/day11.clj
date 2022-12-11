@@ -72,23 +72,29 @@
                     new-count (+ (get counts monkey-id 0) inspected-count)]
                 (recur round (inc monkey-id) monkeys (assoc counts monkey-id new-count)))))))
 
+(defn- calculate-monkey-business
+  [monkeys-counts]
+  (->> monkeys-counts
+       vals
+       (sort >)
+       (take 2)
+       (reduce *)))
+
 (defn part1
   [data]
   (let [[monkeys behaviors] (parse-monkeys data (fn [item] (quot item 3)))]
     (->> (process-all-monkeys 20 monkeys behaviors)
-         vals
-         (sort >)
-         (take 2)
-         (reduce *))))
+         calculate-monkey-business)))
 
 (defn part2
   [data]
-  nil)
+  (let [[monkeys behaviors] (parse-monkeys data #(identity %))]
+    (->> (process-all-monkeys 10000 monkeys behaviors)
+         calculate-monkey-business)))
 
 (defn -main
   []
   (let [day "11"
         data (read-input-as-string (str "day" day ".txt"))]
     (printf "Day %s, part 1: %s\n", day, (part1 data))
-    (printf "Day %s, part 2: %s\n", day, (part2 data))))
-
+    (printf "Day %s, part 2: %s\n", day, (part1 data))))
