@@ -31,11 +31,11 @@
                            (fn [item] (let [op (get expr 1)
                                              arg1 (if (= (get expr 0) "old") item (Integer/parseInt (get expr 0)))
                                              arg2 (if (= (get expr 2) "old") item (Integer/parseInt (get expr 2)))]
-                                         (if (= op "+") (+ (bigint arg1) arg2) (* (bigint arg1) arg2)))))
-        test-arg (->> (get lines 3) (re-matches #"Test: divisible by (\d+)") second Integer/parseInt)
+                                         (if (= op "+") (+ arg1 arg2) (* arg1 arg2)))))
+        test-divisor (->> (get lines 3) (re-matches #"Test: divisible by (\d+)") second Integer/parseInt)
         true-monkey (->> (get lines 4) (re-matches #"If true: throw to monkey (\d+)") second Integer/parseInt)
         false-monkey (->> (get lines 5) (re-matches #"If false: throw to monkey (\d+)") second Integer/parseInt)
-        test-fn (fn [item] (if (= 0 (mod item test-arg)) true-monkey false-monkey))]
+        test-fn (fn [item] (if (= 0 (mod item test-divisor)) true-monkey false-monkey))]
     [items (->MonkeyBehavior id operation-fn relief-fn test-fn)]))
 
 (defn- parse-monkeys
@@ -58,6 +58,12 @@
         (let [[next-monkey-id level] (first rest-inspected)
               next-items (conj (get monkeys next-monkey-id) level)]
           (recur (rest rest-inspected) (assoc monkeys next-monkey-id next-items)))))))
+
+(defn- parse-all-divisors
+  [data]
+  (->> (re-seq #"divisible by (\d+)" data)
+       (map second)
+       (map #(Integer/parseInt %))))
 
 (defn- process-all-monkeys
   [rounds monkeys behaviors]
@@ -89,7 +95,8 @@
 
 (defn part2
   [data]
-  (let [[monkeys behaviors] (parse-monkeys data #(identity %))]
+  (let [divisor (reduce * (parse-all-divisors data))
+        [monkeys behaviors] (parse-monkeys data (fn [item] (mod item divisor)))]
     (->> (process-all-monkeys 10000 monkeys behaviors)
          calculate-monkey-business)))
 
