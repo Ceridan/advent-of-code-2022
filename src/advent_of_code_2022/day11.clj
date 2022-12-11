@@ -29,8 +29,8 @@
                            (str/replace expr "Operation: new = " "")
                            (str/split expr #" ")
                            (fn [item] ((resolve (symbol (get expr 1)))
-                                       (if (= (get expr 0) "old") item (Integer/parseInt (get expr 0)))
-                                       (if (= (get expr 2) "old") item (Integer/parseInt (get expr 2))))))
+                                       (biginteger (if (= (get expr 0) "old") item (Integer/parseInt (get expr 0))))
+                                       (biginteger (if (= (get expr 2) "old") item (Integer/parseInt (get expr 2)))))))
         test-arg (->> (get lines 3) (re-matches #"Test: divisible by (\d+)") second Integer/parseInt)
         true-monkey (->> (get lines 4) (re-matches #"If true: throw to monkey (\d+)") second Integer/parseInt)
         false-monkey (->> (get lines 5) (re-matches #"If false: throw to monkey (\d+)") second Integer/parseInt)
@@ -49,21 +49,21 @@
   (let [inspected (inspect-all (get monkeys monkey-id))]
     (loop [rest-inspected inspected
            monkeys (assoc monkeys monkey-id (assoc (get monkeys monkey-id) :items []))]
-    (if (empty? rest-inspected)
-      [monkeys (count inspected)]
-      (let [[next-monkey-id level] (first rest-inspected)
-            next-items (conj (:items (get monkeys next-monkey-id)) level)]
-        (recur (rest rest-inspected) (assoc monkeys next-monkey-id (assoc (get monkeys next-monkey-id) :items next-items))))))))
+      (if (empty? rest-inspected)
+        [monkeys (count inspected)]
+        (let [[next-monkey-id level] (first rest-inspected)
+              next-items (conj (:items (get monkeys next-monkey-id)) level)]
+          (recur (rest rest-inspected) (assoc monkeys next-monkey-id (assoc (get monkeys next-monkey-id) :items next-items))))))))
 
 (defn- process-all-monkeys
-  [monkeys]
+  [rounds monkeys]
   (let [monkey-count (count monkeys)]
-    (loop [round 1
+    (loop [round 0
            monkey-id 0
            monkeys monkeys
            counts {}]
       (cond
-        (= round 21) counts
+        (= round rounds) counts
         (= monkey-id monkey-count) (recur (inc round) 0 monkeys counts)
         :else (let [[monkeys inspected-count] (process-single-monkey monkeys monkey-id)
                     new-count (+ (get counts monkey-id 0) inspected-count)]
@@ -73,7 +73,7 @@
   [data]
   (->> data
        parse-monkeys
-       process-all-monkeys
+       (process-all-monkeys 20)
        vals
        (sort >)
        (take 2)
