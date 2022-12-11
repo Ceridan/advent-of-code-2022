@@ -6,19 +6,19 @@
   (operation [this item] "Inspection operation")
   (relief [this item] "Relief after inspection")
   (test-item [this item] "Test the item where to pass it")
-  (inspect-all [this items] "Inspect all items"))
+  (inspect-all [this] "Inspect all items"))
 
-(defrecord MonkeyBehavior
-  [id operation-fn relief-fn test-fn]
+(defrecord Monkey
+  [id items operation-fn relief-fn test-fn]
   MonkeyInspection
   (operation [_ item] (operation-fn item))
   (relief [_ item] (relief-fn item))
   (test-item [_ item] (test-fn item))
-  (inspect-all [_ items] (map #(->> %
-                                    (operation _)
-                                    (relief _)
-                                    ((fn [item] [(test-item _ item) item])))
-                              items)))
+  (inspect-all [_] (map #(->> %
+                              (operation _)
+                              (relief _)
+                              ((fn [item] [(test-item _ item) item])))
+                        items)))
 
 (defn- parse-monkey
   [data relief-fn]
@@ -29,35 +29,18 @@
                            (str/replace expr "Operation: new = " "")
                            (str/split expr #" ")
                            (fn [item] (let [op (get expr 1)
-                                             arg1 (if (= (get expr 0) "old") item (Integer/parseInt (get expr 0)))
-                                             arg2 (if (= (get expr 2) "old") item (Integer/parseInt (get expr 2)))]
-                                         (if (= op "+") (+ arg1 arg2) (* arg1 arg2)))))
+                                            arg1 (if (= (get expr 0) "old") item (Integer/parseInt (get expr 0)))
+                                            arg2 (if (= (get expr 2) "old") item (Integer/parseInt (get expr 2)))]
+                                        ((resolve (symbol op)) arg1 arg2))))
         test-divisor (->> (get lines 3) (re-matches #"Test: divisible by (\d+)") second Integer/parseInt)
         true-monkey (->> (get lines 4) (re-matches #"If true: throw to monkey (\d+)") second Integer/parseInt)
         false-monkey (->> (get lines 5) (re-matches #"If false: throw to monkey (\d+)") second Integer/parseInt)
         test-fn (fn [item] (if (= 0 (mod item test-divisor)) true-monkey false-monkey))]
-    [items (->MonkeyBehavior id operation-fn relief-fn test-fn)]))
+    (->Monkey id items operation-fn relief-fn test-fn)))
 
 (defn- parse-monkeys
   [data relief-fn]
-  (let [monkeys (map #(parse-monkey % relief-fn) (str/split data #"\n\n"))]
-    [(->> monkeys
-          (map-indexed #(vector %1 (first %2)))
-          (reduce #(assoc %1 (first %2) (second %2)) {}))
-     (->> monkeys
-          (map second)
-          (reduce #(assoc %1 (:id %2) %2) {}))]))
-
-(defn- process-single-monkey
-  [monkeys behaviors monkey-id]
-  (let [inspected (inspect-all (get behaviors monkey-id) (get monkeys monkey-id))]
-    (loop [rest-inspected inspected
-           monkeys (assoc monkeys monkey-id [])]
-      (if (empty? rest-inspected)
-        [monkeys (count inspected)]
-        (let [[next-monkey-id level] (first rest-inspected)
-              next-items (conj (get monkeys next-monkey-id) level)]
-          (recur (rest rest-inspected) (assoc monkeys next-monkey-id next-items)))))))
+  (mapv #(parse-monkey % relief-fn) (str/split data #"\n\n")))
 
 (defn- parse-all-divisors
   [data]
@@ -65,8 +48,18 @@
        (map second)
        (map #(Integer/parseInt %))))
 
+(defn- process-single-monkey
+  [monkeys monkey-id]
+  (let [inspected (inspect-all (get monkeys monkey-id))]
+    (loop [rest-inspected inspected
+           monkeys (assoc-in monkeys [monkey-id :items] [])]
+      (if (empty? rest-inspected)
+        [monkeys (count inspected)]
+        (let [[next-monkey-id level] (first rest-inspected)]
+          (recur (rest rest-inspected) (update-in monkeys [next-monkey-id :items] #(conj % level))))))))
+
 (defn- process-all-monkeys
-  [rounds monkeys behaviors]
+  [rounds monkeys]
   (let [monkey-count (count monkeys)]
     (loop [round 0
            monkey-id 0
@@ -75,7 +68,7 @@
       (cond
         (= round rounds) counts
         (= monkey-id monkey-count) (recur (inc round) 0 monkeys counts)
-        :else (let [[monkeys inspected-count] (process-single-monkey monkeys behaviors monkey-id)
+        :else (let [[monkeys inspected-count] (process-single-monkey monkeys monkey-id)
                     new-count (+ (get counts monkey-id 0) inspected-count)]
                 (recur round (inc monkey-id) monkeys (assoc counts monkey-id new-count)))))))
 
@@ -89,15 +82,15 @@
 
 (defn part1
   [data]
-  (let [[monkeys behaviors] (parse-monkeys data (fn [item] (quot item 3)))]
-    (->> (process-all-monkeys 20 monkeys behaviors)
+  (let [monkeys (parse-monkeys data (fn [item] (quot item 3)))]
+    (->> (process-all-monkeys 20 monkeys)
          calculate-monkey-business)))
 
 (defn part2
   [data]
   (let [divisor (reduce * (parse-all-divisors data))
-        [monkeys behaviors] (parse-monkeys data (fn [item] (mod item divisor)))]
-    (->> (process-all-monkeys 10000 monkeys behaviors)
+        monkeys (parse-monkeys data (fn [item] (mod item divisor)))]
+    (->> (process-all-monkeys 10000 monkeys)
          calculate-monkey-business)))
 
 (defn -main
