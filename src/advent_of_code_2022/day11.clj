@@ -28,9 +28,10 @@
         operation-fn (as-> (get lines 2) expr
                            (str/replace expr "Operation: new = " "")
                            (str/split expr #" ")
-                           (fn [item] ((resolve (symbol (get expr 1)))
-                                       (biginteger (if (= (get expr 0) "old") item (Integer/parseInt (get expr 0))))
-                                       (biginteger (if (= (get expr 2) "old") item (Integer/parseInt (get expr 2)))))))
+                           (fn [item] (let [op (get expr 1)
+                                             arg1 (if (= (get expr 0) "old") item (Integer/parseInt (get expr 0)))
+                                             arg2 (if (= (get expr 2) "old") item (Integer/parseInt (get expr 2)))]
+                                         (if (= op "+") (+ (bigint arg1) arg2) (* (bigint arg1) arg2)))))
         test-arg (->> (get lines 3) (re-matches #"Test: divisible by (\d+)") second Integer/parseInt)
         true-monkey (->> (get lines 4) (re-matches #"If true: throw to monkey (\d+)") second Integer/parseInt)
         false-monkey (->> (get lines 5) (re-matches #"If false: throw to monkey (\d+)") second Integer/parseInt)
@@ -42,10 +43,10 @@
   (let [monkeys (map #(parse-monkey % relief-fn) (str/split data #"\n\n"))]
     [(->> monkeys
           (map-indexed #(vector %1 (first %2)))
-          (reduce #(assoc %1 (first %2) (second %2)) (sorted-map)))
+          (reduce #(assoc %1 (first %2) (second %2)) {}))
      (->> monkeys
           (map second)
-          (reduce #(assoc %1 (:id %2) %2) (sorted-map)))]))
+          (reduce #(assoc %1 (:id %2) %2) {}))]))
 
 (defn- process-single-monkey
   [monkeys behaviors monkey-id]
@@ -97,4 +98,4 @@
   (let [day "11"
         data (read-input-as-string (str "day" day ".txt"))]
     (printf "Day %s, part 1: %s\n", day, (part1 data))
-    (printf "Day %s, part 2: %s\n", day, (part1 data))))
+    (printf "Day %s, part 2: %s\n", day, (part2 data))))
