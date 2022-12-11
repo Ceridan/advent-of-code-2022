@@ -2,23 +2,7 @@
   (:require [advent-of-code-2022.utils :refer [read-input-as-string]]
             [clojure.string :as str]))
 
-(defprotocol MonkeyInspection
-  (operation [this item] "Inspection operation")
-  (relief [this item] "Relief after inspection")
-  (test-item [this item] "Choose where to pass an item")
-  (inspect-all [this] "Inspect all items"))
-
-(defrecord Monkey
-  [id items operation-fn relief-fn test-fn]
-  MonkeyInspection
-  (operation [_ item] (operation-fn item))
-  (relief [_ item] (relief-fn item))
-  (test-item [_ item] (test-fn item))
-  (inspect-all [_] (map #(->> %
-                              (operation _)
-                              (relief _)
-                              ((fn [item] [(test-item _ item) item])))
-                        items)))
+(defrecord Monkey [id items operation-fn relief-fn test-fn])
 
 (defn- parse-monkey
   [data relief-fn]
@@ -48,9 +32,16 @@
        (map second)
        (map #(Integer/parseInt %))))
 
+(defn- inspect-all-items
+  [monkey]
+  (->> (:items monkey)
+       (map (:operation-fn monkey))
+       (map (:relief-fn monkey))
+       (mapv #(vector ((:test-fn monkey) %) %))))
+
 (defn- process-single-monkey
   [monkeys monkey-id]
-  (let [inspected (inspect-all (get monkeys monkey-id))]
+  (let [inspected (inspect-all-items (get monkeys monkey-id))]
     (loop [rest-inspected inspected
            monkeys (assoc-in monkeys [monkey-id :items] [])]
       (if (empty? rest-inspected)
