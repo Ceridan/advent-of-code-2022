@@ -5,7 +5,7 @@
 (defprotocol MonkeyInspection
   (operation [this item] "Inspection operation")
   (relief [this item] "Relief after inspection")
-  (test-item [this item] "Test the item where to pass it")
+  (test-item [this item] "Choose where to pass an item")
   (inspect-all [this] "Inspect all items"))
 
 (defrecord Monkey
