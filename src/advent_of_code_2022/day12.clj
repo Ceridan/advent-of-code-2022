@@ -38,11 +38,11 @@
     (if (empty? queue)
       costs
       (let [[curr-pos steps] (peek queue)]
-        (cond
-          (contains? ends curr-pos) (recur (pop queue) (assoc costs curr-pos steps))
-          :else (recur
-                  (apply conj (pop queue) (map #(vector % (inc steps)) (get-adjacent grid costs curr-pos steps)))
-                  (assoc costs curr-pos steps)))))))
+        (if (contains? ends curr-pos)
+          (recur (pop queue) (assoc costs curr-pos steps))
+          (recur
+            (apply conj (pop queue) (map #(vector % (inc steps)) (get-adjacent grid costs curr-pos steps)))
+            (assoc costs curr-pos steps)))))))
 
 (defn part1
   [data]
