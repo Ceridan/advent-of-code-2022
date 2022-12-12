@@ -15,4 +15,4 @@
 
 (deftest part2-test
   (testing "Part 2"
-    (is (= nil (part2 "def")))))
+    (is (= 29 (part2 height-map-example)))))

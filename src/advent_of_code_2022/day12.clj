@@ -1,7 +1,6 @@
 (ns advent-of-code-2022.day12
   (:require [advent-of-code-2022.utils :refer [read-input-as-string]]
-            [clojure.string :as str])
-  (:import (clojure.lang PersistentQueue)))
+            [clojure.string :as str]))
 
 (defn- parse-height-map
   [data]
@@ -10,15 +9,16 @@
                        (mapv char-array))
         row-size (count char-grid)
         col-size (count (get char-grid 0))]
-  (loop [grid {} S nil E nil x 0 y 0]
-    (let [ch (get (get char-grid y) x)]
-      (cond (= y row-size) [grid S E]
-            (= x col-size) (recur grid S E 0 (inc y))
-            (= ch \S) (recur (assoc grid [y x] 0) [y x] E (inc x) y)
-            (= ch \E) (recur (assoc grid [y x] (- (int \z) (int \a))) S [y x] (inc x) y)
-            :else (recur (assoc grid [y x] (- (int ch) (int \a))) S E (inc x) y))))))
+    (loop [grid {} S nil E nil a #{} x 0 y 0]
+      (let [ch (get (get char-grid y) x)
+            new-a (if (= ch \a) (conj a [y x]) a)]
+        (cond (= y row-size) [grid S E new-a]
+              (= x col-size) (recur grid S E new-a 0 (inc y))
+              (= ch \S) (recur (assoc grid [y x] 0) [y x] E new-a (inc x) y)
+              (= ch \E) (recur (assoc grid [y x] (- (int \z) (int \a))) S [y x] new-a (inc x) y)
+              :else (recur (assoc grid [y x] (- (int ch) (int \a))) S E new-a (inc x) y))))))
 
-(defn- get-adjacents
+(defn- get-adjacent
   [grid costs pos steps]
   (let [[y x] pos v (get grid pos) cost (inc steps)
         top-pos [(dec y) x] top-v (get grid top-pos) top-cost (get costs top-pos Integer/MAX_VALUE)
@@ -32,26 +32,31 @@
          (filter some?))))
 
 (defn- search
-  [grid start-pos end-pos]
-  (loop [queue (conj [] [start-pos 0])
-         costs {start-pos 0}]
+  [grid start ends]
+  (loop [queue (conj [] [start 0])
+         costs {start 0}]
     (if (empty? queue)
       costs
       (let [[curr-pos steps] (peek queue)]
         (cond
-          (= curr-pos end-pos) (recur (pop queue) (assoc costs end-pos steps))
+          (contains? ends curr-pos) (recur (pop queue) (assoc costs curr-pos steps))
           :else (recur
-                  (apply conj (pop queue) (map #(vector % (inc steps)) (get-adjacents grid costs curr-pos steps)))
+                  (apply conj (pop queue) (map #(vector % (inc steps)) (get-adjacent grid costs curr-pos steps)))
                   (assoc costs curr-pos steps)))))))
 
 (defn part1
   [data]
-  (let [[grid S E] (parse-height-map data)]
-    (get (search grid E S) S)))
+  (let [[grid S E _] (parse-height-map data)]
+    (get (search grid E #{S}) S)))
 
 (defn part2
   [data]
-  nil)
+  (let [[grid _ E a] (parse-height-map data)
+        costs (search grid E a)]
+    (->> a
+         (map #(get costs %))
+         (filter some?)
+         (apply min))))
 
 (defn -main
   []
