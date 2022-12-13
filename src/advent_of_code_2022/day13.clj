@@ -9,37 +9,41 @@
        str/split-lines
        (remove str/blank?)
        (map str/trim)
-       (map edn/read-string)
-       (partition 2)
-       (map-indexed #(vector (inc %1) %2))))
+       (map edn/read-string)))
 
-(defn- right-order?
-  [pair]
-  (loop [p1 (first pair)
-         p2 (second pair)]
-    (let [el1 (first p1)
-          el2 (first p2)
-          el1 (if (and (vector? el2) (not (vector? el1))) [el1] el1)
-          el2 (if (and (vector? el1) (not (vector? el2))) [el2] el2)]
-      (cond
-        (empty? p1) true
-        (empty? p2) false
-        (= el1 el2) (recur (rest p1) (rest p2))
-        (and (vector? el1) (vector? el2)) (right-order? [el1 el2])
-        :else (< el1 el2)))))
+(defn- compare-packets
+  [p1 p2]
+  (cond
+    (and (int? p1) (int? p2)) (cond (< p1 p2) -1 (> p1 p2) 1 :else 0)
+    (and (vector? p1) (int? p2)) (compare-packets p1 [p2])
+    (and (vector? p2) (int? p1)) (compare-packets [p1] p2)
+    :else (loop [p1 p1
+                 p2 p2]
+            (cond
+              (= p1 p2) 0
+              (empty? p1) -1
+              (empty? p2) 1
+              :else (let [res (compare-packets (first p1) (first p2))]
+                      (if (= res 0) (recur (rest p1) (rest p2)) res))))))
 
 (defn part1
   [data]
   (->> data
        parse-packet-pairs
-       (map #(vector (first %) (right-order? (second %))))
-       (filter second)
+       (partition 2)
+       (map-indexed #(vector (inc %1) (compare-packets (first %2) (second %2))))
+       (filter #(= -1 (second %)))
        (map first)
        (reduce +)))
 
 (defn part2
   [data]
-  nil)
+  (->> (conj (parse-packet-pairs data) [[2]] [[6]])
+       (sort compare-packets)
+       (map-indexed #(vector (inc %1) %2))
+       (filter #(or (= (second %) [[2]]) (= (second %) [[6]])))
+       (map first)
+       (reduce *)))
 
 (defn -main
   []

@@ -33,4 +33,4 @@
 
 (deftest part2-test
   (testing "Part 2"
-    (is (= nil (part2 "def")))))
+    (is (= 140 (part2 packet-pairs-example)))))
