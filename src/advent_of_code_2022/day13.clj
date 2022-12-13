@@ -13,18 +13,17 @@
 
 (defn- compare-packets
   [p1 p2]
-  (cond
-    (and (int? p1) (int? p2)) (cond (< p1 p2) -1 (> p1 p2) 1 :else 0)
-    (and (vector? p1) (int? p2)) (compare-packets p1 [p2])
-    (and (vector? p2) (int? p1)) (compare-packets [p1] p2)
-    :else (loop [p1 p1
-                 p2 p2]
-            (cond
-              (= p1 p2) 0
-              (empty? p1) -1
-              (empty? p2) 1
-              :else (let [res (compare-packets (first p1) (first p2))]
-                      (if (= res 0) (recur (rest p1) (rest p2)) res))))))
+  (loop [p1 p1
+         p2 p2]
+    (cond
+      (= p1 p2) 0
+      (and (int? p1) (int? p2)) (cond (< p1 p2) -1 (> p1 p2) 1 :else 0)
+      (and (vector? p1) (int? p2)) (compare-packets p1 [p2])
+      (and (vector? p2) (int? p1)) (compare-packets [p1] p2)
+      (empty? p1) -1
+      (empty? p2) 1
+      :else (let [res (compare-packets (first p1) (first p2))]
+              (if (= res 0) (recur (rest p1) (rest p2)) res)))))
 
 (defn part1
   [data]
