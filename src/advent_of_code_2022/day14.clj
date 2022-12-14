@@ -26,8 +26,10 @@
 (defn- process-send-tile
   [cave x y]
   (if (contains? cave x)
-    (let [min-y (apply min (filter #(> % y) (get cave x)))]
+    (let [filtered-y (filter #(> % y) (get cave x))
+          min-y (if (empty? filtered-y) -1 (apply min filtered-y))]
       (cond
+        (= min-y -1) [-1 -1]
         (not (contains? cave (dec x))) [-1 -1]
         (not (contains? (get cave (dec x)) min-y)) (process-send-tile cave (dec x) min-y)
         (not (contains? cave (inc x))) [-1 -1]

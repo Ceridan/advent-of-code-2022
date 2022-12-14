@@ -11,4 +11,4 @@
 
 (deftest part2-test
   (testing "Part 2"
-    (is (= nil (part2 "def")))))
+    (is (= 93 (part2 cave-example)))))
