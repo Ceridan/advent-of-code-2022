@@ -12,7 +12,7 @@ pom.xml.asc
 /.prepl-port
 out/
 ?/
-.clj-condo
+.clj-condo/
 .lsp/
 
 ### IDE ###

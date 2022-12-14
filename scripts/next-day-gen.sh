@@ -16,6 +16,11 @@ ROOT_DIR=$(cd -- "$(dirname "$0")/.." >/dev/null 2>&1 || exit ; pwd -P)
 
 # Create code file
 code_filename="${ROOT_DIR}/src/advent_of_code_2022/day${DAY}.clj"
+if [ -f "$code_filename" ]; then
+    echo "File \"$code_filename\" already exists"
+    exit 1
+fi
+
 cat <<EOF > "$code_filename"
 (ns advent-of-code-2022.day${DAY}
   (:require [advent-of-code-2022.utils :refer [read-input-as-string]]))
@@ -38,6 +43,11 @@ EOF
 
 # Create test file
 test_filename="${ROOT_DIR}/test/advent_of_code_2022/day${DAY}_test.clj"
+if [ -f "$test_filename" ]; then
+    echo "File \"$test_filename\" already exists"
+    exit 1
+fi
+
 cat <<EOF > "$test_filename"
 (ns advent-of-code-2022.day${DAY}-test
   (:require [clojure.test :refer [deftest testing is]]
@@ -54,6 +64,11 @@ EOF
 
 # Download input
 input_filename="${ROOT_DIR}/resources/day${DAY}.txt"
+if [ -f "$input_filename" ]; then
+    echo "File \"input_filename\" already exists"
+    exit 1
+fi
+
 cookies=$(cat "${ROOT_DIR}"/.env)
 curl https://adventofcode.com/2022/day/$((DAY))/input -b "${cookies}"  -o "${input_filename}"
 
