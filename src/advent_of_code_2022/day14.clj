@@ -1,6 +1,7 @@
 (ns advent-of-code-2022.day14
   (:require [advent-of-code-2022.utils :refer [read-input-as-string-vector]]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [clojure.set :as set]))
 
 (defn- parse-cave-data-line
   [line]
@@ -46,13 +47,37 @@
         round
         (recur (merge-with into cave {x #{y}}) (inc round))))))
 
+(defn- process-send-tile-floor
+  [cave floor-y x y]
+  (if (contains? cave x)
+    (let [filtered-ys (filter #(> % y) (get cave x))
+          min-y (if (empty? filtered-ys) floor-y (apply min filtered-ys))]
+      (cond
+        (= min-y floor-y) [x (dec floor-y)]
+        (not (contains? cave (dec x))) [(dec x) (dec floor-y)]
+        (not (contains? (get cave (dec x)) min-y)) (process-send-tile-floor cave floor-y (dec x) min-y)
+        (not (contains? cave (inc x))) [(inc x) (dec floor-y)]
+        (not (contains? (get cave (inc x)) min-y)) (process-send-tile-floor cave floor-y (inc x) min-y)
+        :else [x (dec min-y)]))
+    [x (dec floor-y)]))
+
+(defn- process-send-floor
+  [cave]
+  (let [floor-y (+ (apply max (apply set/union (vals cave))) 2)]
+    (loop [cave cave
+           round 1]
+      (let [[x y] (process-send-tile-floor cave floor-y 500 0)]
+        (if (= [x y] [500 0])
+          round
+          (recur (merge-with into cave {x #{y}}) (inc round)))))))
+
 (defn part1
   [data]
   (process-send (parse-cave-data data)))
 
 (defn part2
   [data]
-  nil)
+  (process-send-floor (parse-cave-data data)))
 
 (defn -main
   []

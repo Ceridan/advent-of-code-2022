@@ -11,6 +11,9 @@ pom.xml.asc
 /.nrepl-port
 /.prepl-port
 out/
+?/
+.clj-condo
+.lsp/
 
 ### IDE ###
 .idea/
