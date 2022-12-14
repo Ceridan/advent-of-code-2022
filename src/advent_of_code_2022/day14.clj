@@ -49,17 +49,15 @@
 
 (defn- process-send-tile-floor
   [cave floor-y x y]
-  (if (contains? cave x)
-    (let [filtered-ys (filter #(> % y) (get cave x))
-          min-y (if (empty? filtered-ys) floor-y (apply min filtered-ys))]
-      (cond
-        (= min-y floor-y) [x (dec floor-y)]
-        (not (contains? cave (dec x))) [(dec x) (dec floor-y)]
-        (not (contains? (get cave (dec x)) min-y)) (process-send-tile-floor cave floor-y (dec x) min-y)
-        (not (contains? cave (inc x))) [(inc x) (dec floor-y)]
-        (not (contains? (get cave (inc x)) min-y)) (process-send-tile-floor cave floor-y (inc x) min-y)
-        :else [x (dec min-y)]))
-    [x (dec floor-y)]))
+  (loop [cave cave
+         x x
+         y y]
+    (cond
+      (= y floor-y) [x (dec floor-y)]
+      (not (contains? (get cave x) (inc y))) (recur cave x (inc y))
+      (not (contains? (get cave (dec x)) (inc y))) (recur cave (dec x) (inc y))
+      (not (contains? (get cave (inc x)) (inc y))) (recur cave (inc x) (inc y))
+      :else [x y])))
 
 (defn- process-send-floor
   [cave]
