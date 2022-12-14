@@ -25,29 +25,6 @@
       (recur (merge-with into cave (parse-cave-data-line (first lines))) (rest lines)))))
 
 (defn- process-send-tile
-  [cave x y]
-  (if (contains? cave x)
-    (let [filtered-y (filter #(> % y) (get cave x))
-          min-y (if (empty? filtered-y) -1 (apply min filtered-y))]
-      (cond
-        (= min-y -1) [-1 -1]
-        (not (contains? cave (dec x))) [-1 -1]
-        (not (contains? (get cave (dec x)) min-y)) (process-send-tile cave (dec x) min-y)
-        (not (contains? cave (inc x))) [-1 -1]
-        (not (contains? (get cave (inc x)) min-y)) (process-send-tile cave (inc x) min-y)
-        :else [x (dec min-y)]))
-    [-1 -1]))
-
-(defn- process-send
-  [cave]
-  (loop [cave cave
-         round 0]
-    (let [[x y] (process-send-tile cave 500 0)]
-      (if (= [x y] [-1 -1])
-        round
-        (recur (merge-with into cave {x #{y}}) (inc round))))))
-
-(defn- process-send-tile-floor
   [cave floor-y x y]
   (loop [cave cave
          x x
@@ -59,23 +36,28 @@
       (not (contains? (get cave (inc x)) (inc y))) (recur cave (inc x) (inc y))
       :else [x y])))
 
-(defn- process-send-floor
-  [cave]
+(defn- process-send
+  [cave floor-stop-condition?]
   (let [floor-y (+ (apply max (apply set/union (vals cave))) 2)]
     (loop [cave cave
            round 1]
-      (let [[x y] (process-send-tile-floor cave floor-y 500 0)]
-        (if (= [x y] [500 0])
+      (let [[x y] (process-send-tile cave floor-y 500 0)]
+        (if (floor-stop-condition? y floor-y)
           round
           (recur (merge-with into cave {x #{y}}) (inc round)))))))
 
 (defn part1
   [data]
-  (process-send (parse-cave-data data)))
+  (-> data
+      parse-cave-data
+      (process-send (fn [y floor-y] (= y (dec floor-y))))
+      dec))
 
 (defn part2
   [data]
-  (process-send-floor (parse-cave-data data)))
+  (-> data
+      parse-cave-data
+      (process-send (fn [y _] (= y 0)))))
 
 (defn -main
   []
