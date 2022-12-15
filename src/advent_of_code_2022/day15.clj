@@ -16,24 +16,23 @@
     (+ (abs (- sx bx)) (abs (- sy by)))))
 
 (defn- get-cover-distance
-  [sensor beacon row-idx]
-  (let [[sx _] sensor
-        beacon-dist (get-distance sensor beacon)
-        row-dist (get-distance sensor [sx row-idx])
+  [sensor beacon-dist row-idx]
+  (let [[sx sy] sensor
+        row-dist (abs (- sy row-idx))
         diff (- beacon-dist row-dist)]
     (if (< diff 0)
       []
       [(- sx diff) (+ sx diff)])))
 
 (defn- get-possible-positions
-  [sensors row-idx]
-  (loop [sensors sensors
+  [sensors-dist row-idx]
+  (loop [sensors-dist sensors-dist
          positions []]
-    (if (empty? sensors)
+    (if (empty? sensors-dist)
       positions
-      (let [[sensor beacon] (first sensors)
-            cover-distance (get-cover-distance sensor beacon row-idx)]
-        (recur (rest sensors) (if (empty? cover-distance) positions (conj positions cover-distance)))))))
+      (let [[sensor dist] (first sensors-dist)
+            cover-distance (get-cover-distance sensor dist row-idx)]
+        (recur (rest sensors-dist) (if (empty? cover-distance) positions (conj positions cover-distance)))))))
 
 (defn- get-row-beacons-count
   [sensors row-idx]
@@ -59,9 +58,10 @@
 
 (defn part1
   [data row-idx]
-  (let [sensors (parse-sensor-data data)
+  (let [sensors (sort (parse-sensor-data data))
+        sensors-dist (map #(vector (first %) (get-distance (first %) (second %))) sensors)
         row-beacons-count (get-row-beacons-count sensors row-idx)
-        ranges (merge-ranges (get-possible-positions sensors row-idx))]
+        ranges (merge-ranges (get-possible-positions sensors-dist row-idx))]
     (- (->> ranges
             (map #(- (inc (second %)) (first %)))
             (reduce +))
@@ -69,11 +69,12 @@
 
 (defn part2
   [data min-y max-y]
-  (let [sensors (parse-sensor-data data)]
+  (let [sensors (sort (parse-sensor-data data))
+        sensors-dist (map #(vector (first %) (get-distance (first %) (second %))) sensors)]
     (loop [y min-y]
       (if (> y max-y)
         -1
-        (let [ranges (merge-ranges (get-possible-positions sensors y))]
+        (let [ranges (merge-ranges (get-possible-positions sensors-dist y))]
           (if (> (count ranges) 1)
             (+ (* (inc (second (first ranges))) 4000000) y)
             (recur (inc y))))))))
