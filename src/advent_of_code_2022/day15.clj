@@ -34,14 +34,6 @@
             cover-distance (get-cover-distance sensor dist row-idx)]
         (recur (rest sensors-dist) (if (empty? cover-distance) positions (conj positions cover-distance)))))))
 
-(defn- get-row-beacons-count
-  [sensors row-idx]
-  (->> sensors
-       (map second)
-       (filter #(= (second %) row-idx))
-       (into #{})
-       count))
-
 (defn- merge-ranges
   [ranges]
   (loop [ranges (sort ranges)
@@ -51,7 +43,7 @@
       (empty? merged) (recur (rest ranges) (conj merged (first ranges)))
       :else (let [[llx lrx] (last merged)
                   [clx crx] (first ranges)]
-              (if (< lrx clx)
+              (if (< lrx (dec clx))
                 (recur (rest ranges) (conj merged [clx crx]))
                 (recur (rest ranges) (update merged (- (count merged) 1)
                                              (fn [_] [llx (max lrx crx)]))))))))
@@ -60,7 +52,11 @@
   [data row-idx]
   (let [sensors (sort (parse-sensor-data data))
         sensors-dist (map #(vector (first %) (get-distance (first %) (second %))) sensors)
-        row-beacons-count (get-row-beacons-count sensors row-idx)
+        row-beacons-count  (->> sensors
+                                (map second)
+                                (filter #(= (second %) row-idx))
+                                (into #{})
+                                count)
         ranges (merge-ranges (get-possible-positions sensors-dist row-idx))]
     (- (->> ranges
             (map #(- (inc (second %)) (first %)))
@@ -71,13 +67,13 @@
   [data min-y max-y]
   (let [sensors (sort (parse-sensor-data data))
         sensors-dist (map #(vector (first %) (get-distance (first %) (second %))) sensors)]
-    (loop [y min-y]
-      (if (> y max-y)
+    (loop [y max-y]
+      (if (< y min-y)
         -1
         (let [ranges (merge-ranges (get-possible-positions sensors-dist y))]
           (if (> (count ranges) 1)
             (+ (* (inc (second (first ranges))) 4000000) y)
-            (recur (inc y))))))))
+            (recur (dec y))))))))
 
 (defn -main
   []
