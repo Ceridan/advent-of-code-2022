@@ -18,34 +18,55 @@
 
 (defn- get-cover-distance
   [sensor beacon row-idx]
-  (let [[sx sy] sensor
+  (let [[sx _] sensor
         beacon-dist (get-distance sensor beacon)
         row-dist (get-distance sensor [sx row-idx])
         diff (- beacon-dist row-dist)]
     (if (< diff 0)
-      #{}
-      (into #{} (range (- sx diff) (+ sx (inc diff)))))))
+      []
+      [(- sx diff) (+ sx diff)])))
 
 (defn- get-possible-positions
   [sensors row-idx]
   (loop [sensors sensors
-         positions #{}]
+         positions []]
     (if (empty? sensors)
       positions
-      (let [[sensor beacon] (first sensors)]
-        (recur (rest sensors) (into positions (get-cover-distance sensor beacon row-idx)))))))
+      (let [[sensor beacon] (first sensors)
+            cover-distance (get-cover-distance sensor beacon row-idx)]
+        (recur (rest sensors) (if (empty? cover-distance) positions (conj positions cover-distance)))))))
+
+(defn- get-row-beacons-count
+  [sensors row-idx]
+  (->> sensors
+       (map second)
+       (filter #(= (second %) row-idx))
+       (into #{})
+       count))
+
+(defn- merge-ranges
+  [ranges]
+  (loop [ranges (sort ranges)
+         merged []]
+    (cond
+      (empty? ranges) merged
+      (empty? merged) (recur (rest ranges) (conj merged (first ranges)))
+      :else (let [[llx lrx] (last merged)
+                  [clx crx] (first ranges)]
+              (if (< lrx clx)
+                (recur (rest ranges) (conj merged [clx crx]))
+                (recur (rest ranges) (update merged (- (count merged) 1)
+                                             (fn [_] [llx (max lrx crx)]))))))))
 
 (defn part1
   [data row-idx]
   (let [sensors (parse-sensor-data data)
-        beacons (->> sensors
-                     (map second)
-                     (filter #(= (second %) row-idx))
-                     (map first)
-                     (into #{}))]
-    (->> (get-possible-positions sensors row-idx)
-         (remove #(contains? beacons %))
-         count)))
+        row-beacons-count (get-row-beacons-count sensors row-idx)
+        ranges (merge-ranges (get-possible-positions sensors row-idx))]
+    (- (->> ranges
+            (map #(- (inc (second %)) (first %)))
+            (reduce +))
+       row-beacons-count)))
 
 (defn part2
   [data]
@@ -57,5 +78,4 @@
         data (read-input-as-string-vector (str "day" day ".txt"))]
     (printf "Day %s, part 1: %s\n", day, (part1 data 2000000))
     (printf "Day %s, part 2: %s\n", day, (part2 data))))
-
 
