@@ -23,4 +23,4 @@
 
 (deftest part2-test
   (testing "Part 2"
-    (is (= nil (part2 "def")))))
+    (is (= 56000011 (part2 beacon-data-example 0 20)))))

@@ -1,6 +1,5 @@
 (ns advent-of-code-2022.day15
-  (:require [advent-of-code-2022.utils :refer [read-input-as-string-vector]]
-            [clojure.set :as set]))
+  (:require [advent-of-code-2022.utils :refer [read-input-as-string-vector]]))
 
 (defn- parse-sensor-data
   [data]
@@ -69,13 +68,19 @@
        row-beacons-count)))
 
 (defn part2
-  [data]
-  nil)
+  [data min-y max-y]
+  (let [sensors (parse-sensor-data data)]
+    (loop [y min-y]
+      (if (> y max-y)
+        -1
+        (let [ranges (merge-ranges (get-possible-positions sensors y))]
+          (if (> (count ranges) 1)
+            (+ (* (inc (second (first ranges))) 4000000) y)
+            (recur (inc y))))))))
 
 (defn -main
   []
   (let [day "15"
         data (read-input-as-string-vector (str "day" day ".txt"))]
     (printf "Day %s, part 1: %s\n", day, (part1 data 2000000))
-    (printf "Day %s, part 2: %s\n", day, (part2 data))))
-
+    (printf "Day %s, part 2: %s\n", day, (part2 data 0 4000000))))
