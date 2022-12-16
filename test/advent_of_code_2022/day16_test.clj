@@ -14,8 +14,8 @@
 
 (deftest part1-test
   (testing "Part 1"
-    (is (= nil (part1 "abc")))))
+    (is (= 1651 (part1 valve-example)))))
 
 (deftest part2-test
   (testing "Part 2"
-    (is (= nil (part2 "def")))))
+    (is (= 1707 (part2 valve-example)))))
