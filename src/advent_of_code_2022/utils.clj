@@ -4,12 +4,13 @@
 
 (defn read-input-as-string
   [file]
-  (slurp (io/resource file)))
+  (-> (slurp (io/resource file))
+      str/trim-newline))
 
 (defn read-input-as-string-vector
   [file]
   (-> file
-      read-input-as-string
+      (slurp (io/resource file))
       str/split-lines))
 
 (defn read-input-as-integer-grid
