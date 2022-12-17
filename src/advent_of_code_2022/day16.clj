@@ -29,24 +29,28 @@
        (map #(vector (:id %) %))
        (into {})))
 
-(defn- search-best-path
+(defn- search-best-path-impl
   [valves visited current time score]
-  (let [valve (get valves current)]
+  (let [valve (get valves current)
+        new-time (if (contains? visited current) time (dec time))
+        new-score (if (contains? visited current) score (+ score (* (:rate valve) new-time)))
+        new-visited (conj visited current)]
     (cond
       (<= time 0) score
-      :else (let [tunnels (remove #(contains? visited (first %)) (:tunnels valve))
-                  new-time (if (> (:rate valve) 0) (dec time) time)
-                  new-score (if (> (:rate valve) 0) (+ score (* (:rate valve) new-time)) score)]
-              (if (empty? tunnels)
-                new-score
-                (apply max (map #(search-best-path valves (conj visited current) (first %) (- new-time (second %)) new-score) tunnels)))))))
+      (= (count new-visited) (count valves)) new-score
+      :else (let [tunnels (remove #(contains? new-visited (first %)) (:tunnels valve))]
+              (apply max (map #(search-best-path-impl valves new-visited (first %) (- new-time (second %)) new-score) tunnels))))))
+
+(defn- search-best-path
+  [valves]
+  (search-best-path-impl valves #{"AA"} "AA" 30 0))
 
 (defn part1
   [data]
   (-> data
       parse-valve-data
       eliminate-empty-valves
-     (search-best-path #{} "AA" 30 0)))
+      search-best-path))
 
 (defn part2
   [data]
