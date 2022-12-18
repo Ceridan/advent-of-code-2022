@@ -9,8 +9,7 @@
 
 (defn read-input-as-string-vector
   [file]
-  (-> file
-      (slurp (io/resource file))
+  (-> (slurp (io/resource file))
       str/split-lines))
 
 (defn read-input-as-integer-grid
