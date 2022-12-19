@@ -9,21 +9,25 @@
        (map (fn [cube-pos] (vec (map #(Integer/parseInt %) cube-pos))))
        (into #{})))
 
+(defn- get-adjacent
+  [cube]
+  (let [[x y z] cube]
+    [[(dec x) y z] [(inc x) y z]
+     [x (dec y) z] [x (inc y) z]
+     [x y (dec z)] [x y (inc z)]]))
+
 (defn- get-covered-sides
   [cubes cube]
-  (let [[x y z] cube]
-    (->> [(contains? cubes [(dec x) y z]) (contains? cubes [(inc x) y z])
-          (contains? cubes [x (dec y) z]) (contains? cubes [x (inc y) z])
-          (contains? cubes [x y (dec z)]) (contains? cubes [x y (inc z)])]
-         (map #(if (true? %) 1 0))
-         (reduce +))))
+  (->> (get-adjacent cube)
+       (map #(contains? cubes %))
+       (map #(if (true? %) 1 0))
+       (reduce +)))
 
 (defn- calculate-covered-sides
   [cubes]
-  (let [cubes-set (into #{} cubes)]
-    (->> cubes
-         (map #(get-covered-sides cubes-set %))
-         (reduce +))))
+  (->> cubes
+       (map #(get-covered-sides cubes %))
+       (reduce +)))
 
 (defn- get-dimensions
   [cubes]
@@ -56,7 +60,7 @@
           (or (< x min-x) (> x max-x)) (recur (rest queue) visited)
           (or (< y min-y) (> y max-y)) (recur (rest queue) visited)
           (or (< z min-z) (> z max-z)) (recur (rest queue) visited)
-          :else (recur (conj queue [(dec x) y z] [(inc x) y z] [x (dec y) z] [x (inc y) z] [x y (dec z)] [x y (inc z)])
+          :else (recur (apply conj queue (get-adjacent cube))
                        (assoc visited cube true)))))))
 
 (defn part1
