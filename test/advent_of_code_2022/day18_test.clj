@@ -26,4 +26,4 @@
 
 (deftest part2-test
   (testing "Part 2"
-    (is (= nil (part2 "def")))))
+    (is (= 58 (part2 cube-large-example)))))

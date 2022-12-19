@@ -6,7 +6,8 @@
   (->> data
        (map #(re-matches #"(\d+),(\d+),(\d+)" %))
        (map rest)
-       (map (fn [cube-pos] (vec (map #(Integer/parseInt %) cube-pos))))))
+       (map (fn [cube-pos] (vec (map #(Integer/parseInt %) cube-pos))))
+       (into #{})))
 
 (defn- get-covered-sides
   [cubes cube]
@@ -24,6 +25,40 @@
          (map #(get-covered-sides cubes-set %))
          (reduce +))))
 
+(defn- get-dimensions
+  [cubes]
+  [[(apply min (map first cubes)) (apply max (map first cubes))]
+   [(apply min (map second cubes)) (apply max (map second cubes))]
+   [(apply min (map last cubes)) (apply max (map last cubes))]])
+
+(defn- get-all-cubes
+  [dimensions]
+  (let [[[min-x max-x] [min-y max-y] [min-z max-z]] dimensions]
+    (for [x (range min-x (inc max-x))
+          y (range min-y (inc max-y))
+          z (range min-z (inc max-z))] [x y z])))
+
+(defn- connect-external
+  [cubes]
+  (let [dimensions (get-dimensions cubes)
+        [[min-x max-x] [min-y max-y] [min-z max-z]] dimensions
+        all-cubes (get-all-cubes dimensions)
+        borders (filter #(or (= (first %) min-x) (= (first %) max-x)
+                             (= (second %) min-y) (= (second %) max-y)
+                             (= (last %) min-z) (= (last %) max-z)) all-cubes)]
+    (loop [queue borders
+           visited (into {} (map #(vector % (contains? cubes %)) all-cubes))]
+      (let [cube (first queue)
+            [x y z] cube]
+        (cond
+          (empty? queue) visited
+          (true? (get visited cube)) (recur (rest queue) visited)
+          (or (< x min-x) (> x max-x)) (recur (rest queue) visited)
+          (or (< y min-y) (> y max-y)) (recur (rest queue) visited)
+          (or (< z min-z) (> z max-z)) (recur (rest queue) visited)
+          :else (recur (conj queue [(dec x) y z] [(inc x) y z] [x (dec y) z] [x (inc y) z] [x y (dec z)] [x y (inc z)])
+                       (assoc visited cube true)))))))
+
 (defn part1
   [data]
   (let [cubes (parse-cube-data data)
@@ -33,7 +68,12 @@
 
 (defn part2
   [data]
-  nil)
+  (let [cubes (parse-cube-data data)
+        pockets (keys (filter #(false? (val %)) (connect-external cubes)))
+        cubes-with-pockets (into cubes pockets)
+        total-sides (* (count cubes-with-pockets) 6)
+        covered-sides (calculate-covered-sides cubes-with-pockets)]
+    (- total-sides covered-sides)))
 
 (defn -main
   []
