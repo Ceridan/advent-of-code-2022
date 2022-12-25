@@ -58,28 +58,6 @@
         figure-max-y (apply max (map #(second %) blocks))]
     [(into chamber blocks) figure-max-y]))
 
-(defn- play-tetris
-  [jets rounds]
-  (loop [chamber (into #{} (map #(vector % 0) (range 0 7)))
-         round 0
-         [x y] [2 4]
-         max-y 0
-         jet-idx 0
-         figure-idx 0]
-    (if (= round rounds)
-      max-y
-      (let [figure (get figures figure-idx)
-            jet (get jets jet-idx)
-            new-x (if (= jet \<) (move-left chamber figure x y) (move-right chamber figure x y))
-            new-y (move-down chamber figure new-x y)
-            next-jet-idx (mod (inc jet-idx) (count jets))]
-        (if (= new-y y)
-          (let [[new-chamber figure-max-y] (recalculate-chamber chamber figure new-x new-y)
-                new-max-y (max max-y figure-max-y)
-                next-figure-idx (mod (inc figure-idx) (count figures))]
-            (recur new-chamber (inc round) [2 (+ new-max-y 4)] new-max-y next-jet-idx next-figure-idx))
-          (recur chamber round [new-x new-y] max-y next-jet-idx figure-idx))))))
-
 (defn- get-chamber-state
   [chamber max-y depth]
   (->> chamber
@@ -96,43 +74,44 @@
         skip-round (+ (:round pattern2) (* repetition dr))]
     [(dec repetition-max-y) skip-round]))
 
-(defn- play-infinite-tetris
-  [jets rounds depth]
-  (loop [chamber (into #{} (map #(vector % 0) (range 0 7)))
-         round 1
-         [x y] [2 4]
-         max-y 0
-         jet-idx 0
-         figure-idx 0
-         states {}
-         middle-y 0]
-    (if (> round rounds)
-      (+ max-y middle-y)
-      (let [figure (get figures figure-idx)
-            jet (get jets jet-idx)
-            new-x (if (= jet \<) (move-left chamber figure x y) (move-right chamber figure x y))
-            new-y (move-down chamber figure new-x y)
-            next-jet-idx (mod (inc jet-idx) (count jets))]
-        (if (= new-y y)
-          (let [[new-chamber figure-max-y] (recalculate-chamber chamber figure new-x new-y)
-                new-max-y (max max-y figure-max-y)
-                next-figure-idx (mod (inc figure-idx) (count figures))
-                state-key [figure-idx jet-idx (get-chamber-state new-chamber new-max-y depth)]]
-            (if (and (= middle-y 0) (contains? states state-key))
-                (let [[middle round] (calculate-shortcut (get states state-key) {:round round :max-y new-max-y} rounds)]
-                  (recur new-chamber round [2 (+ new-max-y 4)] new-max-y next-jet-idx next-figure-idx states middle))
-              (recur new-chamber (inc round) [2 (+ new-max-y 4)] new-max-y next-jet-idx next-figure-idx (assoc states state-key {:round round :max-y new-max-y}) middle-y)))
-          (recur chamber round [new-x new-y] max-y next-jet-idx figure-idx states middle-y))))))
-
+(defn- play-tetris
+  ([jets rounds] (play-tetris jets rounds (inc rounds) -1))
+  ([jets rounds skip depth]
+    (loop [chamber (into #{} (map #(vector % 0) (range 0 7)))
+           round 1
+           [x y] [2 4]
+           max-y 0
+           jet-idx 0
+           figure-idx 0
+           states {}
+           aggregated-sum-y 0]
+      (if (> round rounds)
+        (+ max-y aggregated-sum-y)
+        (let [figure (get figures figure-idx)
+              jet (get jets jet-idx)
+              new-x (if (= jet \<) (move-left chamber figure x y) (move-right chamber figure x y))
+              new-y (move-down chamber figure new-x y)
+              next-jet-idx (mod (inc jet-idx) (count jets))]
+          (if (= new-y y)
+            (let [[new-chamber figure-max-y] (recalculate-chamber chamber figure new-x new-y)
+                  new-max-y (max max-y figure-max-y)
+                  next-figure-idx (mod (inc figure-idx) (count figures))
+                  state-key [figure-idx jet-idx (get-chamber-state new-chamber new-max-y depth)]]
+              (if (and (> round skip) (= aggregated-sum-y 0) (contains? states state-key))
+                  (let [[middle round] (calculate-shortcut (get states state-key) {:round round :max-y new-max-y} rounds)]
+                    (recur new-chamber round [2 (+ new-max-y 4)] new-max-y next-jet-idx next-figure-idx states middle))
+                (recur new-chamber (inc round) [2 (+ new-max-y 4)] new-max-y next-jet-idx next-figure-idx (assoc states state-key {:round round :max-y new-max-y}) aggregated-sum-y)))
+            (recur chamber round [new-x new-y] max-y next-jet-idx figure-idx states aggregated-sum-y)))))))
 
 (defn part1
   [data rocks-count]
   (play-tetris (char-array data) rocks-count))
 
-
 (defn part2
   [data rocks-count]
-  (play-infinite-tetris (char-array data) rocks-count 20))
+  (let [skip 2022
+        depth 20]
+    (play-tetris (char-array data) rocks-count skip depth)))
 
 (defn -main
   []
