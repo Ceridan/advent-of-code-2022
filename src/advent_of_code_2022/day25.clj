@@ -11,17 +11,18 @@
 
 (defn decimal-to-snafu
   [decimal]
-  (let [ch-zero 48]
     (loop [rev-five (dec-to-five-rev decimal)
            modifier 0
            value []]
       (let [num (+ modifier (if (empty? rev-five) 0 (first rev-five)))]
         (cond
-          (empty? rev-five) (apply str (reverse (if (= num 1) (conj value (char (+ ch-zero num))) value)))
+          (empty? rev-five) (apply str (reverse (if (= num 1) (conj value \1) value)))
+          (= num 0) (recur (rest rev-five) 0 (conj value \0))
+          (= num 1) (recur (rest rev-five) 0 (conj value \1))
+          (= num 2) (recur (rest rev-five) 0 (conj value \2))
           (= num 3) (recur (rest rev-five) 1 (conj value \=))
           (= num 4) (recur (rest rev-five) 1 (conj value \-))
-          (= num 5) (recur (rest rev-five) 1 (conj value \0))
-          :else (recur (rest rev-five) 0 (conj value (char (+ ch-zero num)))))))))
+          (= num 5) (recur (rest rev-five) 1 (conj value \0))))))
 
 (defn snafu-to-decimal
   [snafu]
