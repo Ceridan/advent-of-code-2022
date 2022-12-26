@@ -29,32 +29,51 @@
        (map #(vector (:id %) %))
        (into {})))
 
-(defn- search-best-path-impl
-  [valves visited current time score]
-  (let [valve (get valves current)
-        new-time (if (contains? visited current) time (dec time))
-        new-score (if (contains? visited current) score (+ score (* (:rate valve) new-time)))
-        new-visited (conj visited current)]
+(defn- search-best-score
+  [valves state]
+  (let [{v :valve t :time visited :visited} state
+        details (get valves v)]
     (cond
-      (<= time 0) score
-      (= (count new-visited) (count valves)) new-score
-      :else (let [tunnels (remove #(contains? new-visited (first %)) (:tunnels valve))]
-              (apply max (map #(search-best-path-impl valves new-visited (first %) (- new-time (second %)) new-score) tunnels))))))
+      (<= t 0) 0
+      (contains? visited v) 0
+      (= (count valves) (count visited)) 0
+      :else (+ (* (:rate details) t)
+               (apply max (map #(search-best-score valves {:valve (first %) :time (- (dec t) (second %)) :visited (conj visited v)})
+                               (:tunnels details)))))))
 
 (defn- search-best-path
-  [valves]
-  (search-best-path-impl valves #{"AA"} "AA" 30 0))
+  [valves state]
+  (let [{v :valve t :time visited :visited} state
+        details (get valves v)]
+    (cond
+      (<= t 0) [[0 visited]]
+      (contains? visited v) [[0 visited]]
+      (= (count valves) (count visited)) [[0 visited]]
+      :else (let [rate (* (:rate details) t)]
+              (->> (:tunnels details)
+                   (map #(search-best-path valves {:valve (first %) :time (- (dec t) (second %)) :visited (conj visited v)}))
+                   flatten
+                   (partition 2)
+                   distinct
+                   (mapv #(vector (+ (first %) rate) (second %)))
+                   )))))
 
 (defn part1
   [data]
-  (-> data
-      parse-valve-data
-      eliminate-empty-valves
-      search-best-path))
+  (with-redefs [search-best-score (memoize search-best-score)]
+    (-> data
+        parse-valve-data
+        eliminate-empty-valves
+        (search-best-score {:valve "AA" :time 30 :visited #{}}))))
 
 (defn part2
   [data]
-  nil)
+  (with-redefs [search-best-path (memoize search-best-path)
+                search-best-score (memoize search-best-score)]
+    (let [valves (-> data parse-valve-data eliminate-empty-valves)]
+      (->> (search-best-path valves {:valve "AA" :time 26 :visited #{}})
+           (map #(+ (first %) (search-best-score valves {:valve "AA" :time 26 :visited (disj (second %) "AA")})))
+           (apply max)))))
 
 (defn -main
   []
