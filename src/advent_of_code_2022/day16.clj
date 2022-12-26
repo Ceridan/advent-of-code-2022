@@ -55,8 +55,7 @@
                    flatten
                    (partition 2)
                    distinct
-                   (mapv #(vector (+ (first %) rate) (second %)))
-                   )))))
+                   (mapv #(vector (+ (first %) rate) (second %))))))))
 
 (defn part1
   [data]
