@@ -10,4 +10,4 @@
 
 (deftest part2-test
   (testing "Part 2"
-    (is (= nil (part2 "def")))))
+    (is (= 1623178306 (part2 nums-example)))))

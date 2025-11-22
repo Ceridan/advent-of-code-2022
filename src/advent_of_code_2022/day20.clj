@@ -1,5 +1,5 @@
 (ns advent-of-code-2022.day20
-  (:require [advent-of-code-2022.utils :refer [read-input-as-integer-vector]]))
+  (:require [advent-of-code-2022.utils :refer [read-input-as-long-vector]]))
 
 (defn- mix-num
   [numbers positions idx]
@@ -25,11 +25,12 @@
         init-vec (vec (repeat size 0))]
     (reduce (fn [acc idx] (assoc acc (get positions idx) (get numbers idx))) init-vec (range size))))
 
-(defn part1
-  [data]
-  (let [numbers data
+(defn- decrypt
+  [numbers decryption-key mix-count]
+  (let [numbers (mapv #(* decryption-key %) numbers)
         positions (vec (range (count numbers)))
-        mixed-positions (reduce (partial mix-num numbers) positions positions)
+        mix-seq (take (* mix-count (count numbers)) (cycle positions))
+        mixed-positions (reduce (partial mix-num numbers) positions mix-seq)
         mixed-numbers (mapv-num-to-pos numbers mixed-positions)]
     (->> mixed-numbers
          cycle
@@ -39,14 +40,18 @@
          (take 3)
          (apply +))))
 
+(defn part1
+  [data]
+  (decrypt data 1 1))
+
 (defn part2
   [data]
-  nil)
+  (decrypt data 811589153 10))
 
 (defn -main
   []
   (let [day "20"
-        data (read-input-as-integer-vector (str "day" day ".txt"))
+        data (read-input-as-long-vector (str "day" day ".txt"))
         ]
     (printf "Day %s, part 1: %s\n", day, (part1 data))
     (printf "Day %s, part 2: %s\n", day, (part2 data))))
