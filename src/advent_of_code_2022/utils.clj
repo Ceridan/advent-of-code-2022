@@ -19,3 +19,9 @@
        (map #(char-array %))
        (mapv (fn [row] (let [zero (int \0)]
                          (mapv #(- (int %) zero) row))))))
+
+(defn read-input-as-integer-vector
+  [file]
+  (->> (slurp (io/resource file))
+      str/split-lines
+      (mapv #(Integer/parseInt %))))
