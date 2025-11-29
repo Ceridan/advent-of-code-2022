@@ -8,8 +8,8 @@
 
 (deftest part1-test
   (testing "Part 1"
-    (is (= 33 (part1 blueprints)))))
+    (is (= 33 (part1 blueprints 24)))))
 
 (deftest part2-test
   (testing "Part 2"
-    (is (= nil (part2 "def")))))
+    (is (= (* 56 62) (part2 blueprints 32)))))

@@ -1,8 +1,7 @@
 (ns advent-of-code-2022.day19
   (:require [advent-of-code-2022.utils :refer [read-input-as-string-vector]]))
 
-(def time-limit 24)
-(def states-limit 100)
+(def states-limit 2000)
 
 (defrecord Factory [robot ore clay obsidian])
 (defrecord Blueprint [id ore-factory clay-factory obsidian-factory geode-factory])
@@ -55,19 +54,19 @@
 
 (defn- calculate-next-states
   [blueprint state]
-    (let [{resources :resources robots :robots} state
-          can-build? (partial can-build? blueprint resources)
-          build-robot (partial build-robot blueprint resources)]
-      (->> [(when (can-build? :geode)
-               (->State (produce-resources (build-robot :geode) robots) (assoc robots :geode (inc (:geode robots)))))
-             (when (can-build? :obsidian)
-               (->State (produce-resources (build-robot :obsidian) robots) (assoc robots :obsidian (inc (:obsidian robots)))))
-             (when (can-build? :clay)
-               (->State (produce-resources (build-robot :clay) robots) (assoc robots :clay (inc (:clay robots)))))
-             (when (can-build? :ore)
-               (->State (produce-resources (build-robot :ore) robots) (assoc robots :ore (inc (:ore robots)))))
-             (->State (produce-resources resources robots) robots)]
-           (filterv some?))))
+  (let [{resources :resources robots :robots} state
+        can-build? (partial can-build? blueprint resources)
+        build-robot (partial build-robot blueprint resources)]
+    (->> [(when (can-build? :geode)
+            (->State (produce-resources (build-robot :geode) robots) (assoc robots :geode (inc (:geode robots)))))
+          (when (can-build? :obsidian)
+            (->State (produce-resources (build-robot :obsidian) robots) (assoc robots :obsidian (inc (:obsidian robots)))))
+          (when (can-build? :clay)
+            (->State (produce-resources (build-robot :clay) robots) (assoc robots :clay (inc (:clay robots)))))
+          (when (can-build? :ore)
+            (->State (produce-resources (build-robot :ore) robots) (assoc robots :ore (inc (:ore robots)))))
+          (->State (produce-resources resources robots) robots)]
+         (filterv some?))))
 
 (defn- state-to-vec
   [state]
@@ -75,8 +74,8 @@
         rbt (:robots state)]
     (vec
       (interleave
-        [(:geode res) (:obsidian res) (:clay res) (:ore res)]
-        [(:geode rbt) (:obsidian rbt) (:clay rbt) (:ore rbt)]))))
+        [(:geode rbt) (:obsidian rbt) (:clay rbt) (:ore rbt)]
+        [(:geode res) (:obsidian res) (:clay res) (:ore res)]))))
 
 (defn- state-rev-cmp
   [state1 state2]
@@ -90,7 +89,7 @@
        (set)))
 
 (defn- simulate-blueprint
-  [blueprint state]
+  [blueprint state time-limit]
   (loop [time 0
          states #{state}]
     (cond
@@ -98,6 +97,7 @@
       :else (->> states
                  (map #(calculate-next-states blueprint %))
                  (flatten)
+                 (distinct)
                  (choose-top-states)
                  (recur (inc time))))))
 
@@ -108,27 +108,31 @@
        (apply max)))
 
 (defn- process-blueprint
-  [blueprint]
+  [blueprint time-limit]
   (let [start-state (->State (->Resources 0 0 0 0) (->Robots 1 0 0 0))
-        states (simulate-blueprint blueprint start-state)
+        states (simulate-blueprint blueprint start-state time-limit)
         geodes (get-max-geodes states)]
     [(:id blueprint) geodes]))
 
 (defn part1
-  [data]
+  [data time-limit]
   (let [blueprints (parse-blueprints data)]
     (->> blueprints
-         (map process-blueprint)
+         (map #(process-blueprint % time-limit))
          (map #(apply * %))
          (apply +))))
 
 (defn part2
-  [data]
-  nil)
+  [data time-limit]
+  (let [blueprints (take 3 (parse-blueprints data))]
+    (->> blueprints
+         (map #(process-blueprint % time-limit))
+         (map last)
+         (apply *))))
 
 (defn -main
   []
   (let [day "19"
         data (read-input-as-string-vector (str "day" day ".txt"))]
-    (printf "Day %s, part 1: %s\n", day, (part1 data))
-    (printf "Day %s, part 2: %s\n", day, (part2 data))))
+    (printf "Day %s, part 1: %s\n", day, (part1 data 24))
+    (printf "Day %s, part 2: %s\n", day, (part2 data 32))))
