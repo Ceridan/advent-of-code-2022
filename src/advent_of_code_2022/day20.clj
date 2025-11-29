@@ -51,7 +51,6 @@
 (defn -main
   []
   (let [day "20"
-        data (read-input-as-long-vector (str "day" day ".txt"))
-        ]
+        data (read-input-as-long-vector (str "day" day ".txt"))]
     (printf "Day %s, part 1: %s\n", day, (part1 data))
     (printf "Day %s, part 2: %s\n", day, (part2 data))))
