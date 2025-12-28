@@ -65,11 +65,12 @@
   [plant-map round]
   (let [proposals (collect-proposals plant-map round)
         actionable (reduce-kv (fn [m k v] (if (= 1 (count v)) (assoc m (first v) k) m)) {} proposals)]
-    (reduce-kv (fn [pm old-pos new-pos]
-                 (-> pm
-                     (disj old-pos)
-                     (conj new-pos))
-                 ) plant-map actionable)))
+    (cond
+      (> (count actionable) 0) (reduce-kv (fn [pm old-pos new-pos]
+                                            (-> pm
+                                                (disj old-pos)
+                                                (conj new-pos))) plant-map actionable)
+      :else nil)))
 
 (defn- get-area
   [plant-map]
@@ -91,7 +92,13 @@
 
 (defn part2
   [data]
-  nil)
+  (let [plant-map (parse-plant-map data)]
+    (loop [pm plant-map
+           round 0]
+      (cond
+        (nil? pm) round
+        :else (recur (play-round pm round) (inc round))))
+    ))
 
 (defn -main
   []

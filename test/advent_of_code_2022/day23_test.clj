@@ -16,4 +16,4 @@
 
 (deftest part2-test
   (testing "Part 2"
-    (is (= nil (part2 plant-map-example)))))
+    (is (= 20 (part2 plant-map-example)))))
