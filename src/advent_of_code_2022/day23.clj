@@ -15,7 +15,8 @@
        (map #(map (fn [chr] (vector [(first %) (first chr)] (second chr))) (second %)))
        (apply concat)
        (filter #(= (second %) \#))
-       (into {})))
+       (map first)
+       (into #{})))
 
 (defn- get-empty-neighbors
   [plant-map pos]
@@ -52,8 +53,8 @@
                         (take 4)
                         (vec))]
     (loop [proposals {}
-           pos (first (keys plant-map))
-           tail (rest (keys plant-map))]
+           pos (first plant-map)
+           tail (rest plant-map)]
       (cond
         (nil? pos) proposals
         :else (if-let [prop-pos (propose plant-map pos prop-order)]
@@ -66,16 +67,16 @@
         actionable (reduce-kv (fn [m k v] (if (= 1 (count v)) (assoc m (first v) k) m)) {} proposals)]
     (reduce-kv (fn [pm old-pos new-pos]
                  (-> pm
-                     (dissoc old-pos)
-                     (assoc new-pos \#))
+                     (disj old-pos)
+                     (conj new-pos))
                  ) plant-map actionable)))
 
 (defn- get-area
   [plant-map]
-  (let [min-y (apply min (map first (keys plant-map)))
-        max-y (apply max (map first (keys plant-map)))
-        min-x (apply min (map second (keys plant-map)))
-        max-x (apply max (map second (keys plant-map)))]
+  (let [min-y (apply min (map first plant-map))
+        max-y (apply max (map first plant-map))
+        min-x (apply min (map second plant-map))
+        max-x (apply max (map second plant-map))]
     (* (- (inc max-y) min-y) (- (inc max-x) min-x))))
 
 (defn part1
@@ -85,7 +86,8 @@
            rseq (range rounds)]
       (cond
         (empty? rseq) (- (get-area pm) (count pm))
-        :else (recur (play-round pm (first rseq)) (rest rseq))))))
+        :else (recur (play-round pm (first rseq)) (rest rseq))))
+    ))
 
 (defn part2
   [data]
