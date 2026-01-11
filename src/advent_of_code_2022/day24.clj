@@ -52,11 +52,11 @@
 
 (defn- get-all-blizzard-positions
   [blizzards rounds]
-    (loop [t 0
-           positions {}]
-      (cond
-        (= t rounds) positions
-        :else (recur (inc t) (assoc positions t (get-blizzards-next-pos blizzards t))))))
+  (loop [t 0
+         positions {}]
+    (cond
+      (= t rounds) positions
+      :else (recur (inc t) (assoc positions t (get-blizzards-next-pos blizzards t))))))
 
 (defn- add-dir
   [pos dir]
@@ -74,21 +74,26 @@
         blizzard-positions (get-all-blizzard-positions blizzards rounds)
         start [0 1]
         finish [(dec rows) (- cols 2)]]
-    (loop [queue (into PersistentQueue/EMPTY [(conj start 0)])]
-      (let [[y x t] (peek queue)]
+    (loop [queue (into PersistentQueue/EMPTY [(conj start 0)])
+           visited {}]
+      (let [[y x t] (peek queue)
+            vts (get visited [y x] #{})]
         ;(print y x t "\n")
         (cond
           (= [y x] finish) t
-          :else (let [t (inc t)
-                      blizz-pos (get blizzard-positions (mod t rounds))
+          (contains? vts (mod t rounds)) (recur (pop queue) visited)
+          :else (let [new-visited (assoc visited [y x] (conj vts (mod t rounds)))
+                      new-t (inc t)
+                      blizz-pos (get blizzard-positions (mod new-t rounds))
                       new-queue (pop queue)
-                      new-queue (let [npos (add-dir [y x] :S)] (if (or (= (map-fn npos) \#) (contains? blizz-pos npos)) new-queue (conj new-queue (conj npos t))))
-                      new-queue (let [npos (add-dir [y x] :E)] (if (or (= (map-fn npos) \#) (contains? blizz-pos npos)) new-queue (conj new-queue (conj npos t))))
-                      new-queue (let [npos (add-dir [y x] :W)] (if (or (= (map-fn npos) \#) (contains? blizz-pos npos)) new-queue (conj new-queue (conj npos t))))
-                      new-queue (let [npos (add-dir [y x] :N)] (if (or (<= (first npos) 0) (contains? blizz-pos npos)) new-queue (conj new-queue (conj npos t))))
-                      new-queue (if (contains? blizz-pos [y x]) new-queue (conj new-queue (conj [y x] t)))]
+                      new-queue (let [npos (add-dir [y x] :S)] (if (or (= (map-fn npos) \#) (contains? blizz-pos npos)) new-queue (conj new-queue (conj npos new-t))))
+                      new-queue (let [npos (add-dir [y x] :E)] (if (or (= (map-fn npos) \#) (contains? blizz-pos npos)) new-queue (conj new-queue (conj npos new-t))))
+                      new-queue (let [npos (add-dir [y x] :W)] (if (or (= (map-fn npos) \#) (contains? blizz-pos npos)) new-queue (conj new-queue (conj npos new-t))))
+                      new-queue (let [npos (add-dir [y x] :N)] (if (or (<= (first npos) 0) (contains? blizz-pos npos)) new-queue (conj new-queue (conj npos new-t))))
+                      new-queue (if (contains? blizz-pos [y x]) new-queue (conj new-queue (conj [y x] new-t)))]
                   ;(print blizz-pos "\n")
-                  (recur new-queue)))))))
+                  (recur new-queue new-visited)))))
+    ))
 
 (defn part1
   [data]
