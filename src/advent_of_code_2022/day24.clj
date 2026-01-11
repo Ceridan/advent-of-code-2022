@@ -51,12 +51,13 @@
       :else (recur (first tail) (rest tail) (conj positions (get (:route blizzard) (mod t (count (:route blizzard)))))))))
 
 (defn- get-all-blizzard-positions
-  [blizzards rounds]
-  (loop [t 0
-         positions {}]
-    (cond
-      (= t rounds) positions
-      :else (recur (inc t) (assoc positions t (get-blizzards-next-pos blizzards t))))))
+  [blizzard-map size rounds]
+  (let [blizzards (get-all-blizzards blizzard-map size)]
+    (loop [t 0
+           positions {}]
+      (cond
+        (= t rounds) positions
+        :else (recur (inc t) (assoc positions t (get-blizzards-next-pos blizzards t)))))))
 
 (defn- add-dir
   [pos dir]
@@ -64,21 +65,23 @@
         [dy dx] (get directions dir)]
     [(+ y dy) (+ x dx)]))
 
-(defn- walk
+(defn- get-size-round-and-positions
   [blizzard-map]
-  (let [map-fn (partial get blizzard-map)
-        size (get-valley-size blizzard-map)
+  (let [size (get-valley-size blizzard-map)
         [rows cols] size
         rounds (* (- rows 2) (- cols 2))
-        blizzards (get-all-blizzards blizzard-map size)
-        blizzard-positions (get-all-blizzard-positions blizzards rounds)
         start [0 1]
         finish [(dec rows) (- cols 2)]]
-    (loop [queue (into PersistentQueue/EMPTY [(conj start 0)])
+    [size rounds start finish]))
+
+(defn- walk
+  [blizzard-map blizzard-positions size rounds start finish current-time]
+  (let [map-fn (partial get blizzard-map)
+        [rows _] size]
+    (loop [queue (into PersistentQueue/EMPTY [(conj start current-time)])
            visited {}]
       (let [[y x t] (peek queue)
             vts (get visited [y x] #{})]
-        ;(print y x t "\n")
         (cond
           (= [y x] finish) t
           (contains? vts (mod t rounds)) (recur (pop queue) visited)
@@ -86,24 +89,31 @@
                       new-t (inc t)
                       blizz-pos (get blizzard-positions (mod new-t rounds))
                       new-queue (pop queue)
-                      new-queue (let [npos (add-dir [y x] :S)] (if (or (= (map-fn npos) \#) (contains? blizz-pos npos)) new-queue (conj new-queue (conj npos new-t))))
+                      new-queue (let [npos (add-dir [y x] :S)] (if (or (> (first npos) (dec rows)) (= (map-fn npos) \#) (contains? blizz-pos npos)) new-queue (conj new-queue (conj npos new-t))))
                       new-queue (let [npos (add-dir [y x] :E)] (if (or (= (map-fn npos) \#) (contains? blizz-pos npos)) new-queue (conj new-queue (conj npos new-t))))
                       new-queue (let [npos (add-dir [y x] :W)] (if (or (= (map-fn npos) \#) (contains? blizz-pos npos)) new-queue (conj new-queue (conj npos new-t))))
-                      new-queue (let [npos (add-dir [y x] :N)] (if (or (<= (first npos) 0) (contains? blizz-pos npos)) new-queue (conj new-queue (conj npos new-t))))
+                      new-queue (let [npos (add-dir [y x] :N)] (if (or (< (first npos) 0) (= (map-fn npos) \#) (contains? blizz-pos npos)) new-queue (conj new-queue (conj npos new-t))))
                       new-queue (if (contains? blizz-pos [y x]) new-queue (conj new-queue (conj [y x] new-t)))]
-                  ;(print blizz-pos "\n")
                   (recur new-queue new-visited)))))
     ))
 
 (defn part1
   [data]
-  (->> data
-       (parse-blizzard-map)
-       (walk)))
+  (let [blizzard-map (parse-blizzard-map data)
+        [size rounds start finish] (get-size-round-and-positions blizzard-map)
+        blizzard-positions (get-all-blizzard-positions blizzard-map size rounds)]
+    (walk blizzard-map blizzard-positions size rounds start finish 0)))
 
 (defn part2
   [data]
-  nil)
+  (let [blizzard-map (parse-blizzard-map data)
+        [size rounds start finish] (get-size-round-and-positions blizzard-map)
+        blizzard-positions (get-all-blizzard-positions blizzard-map size rounds)
+        walk-fn (partial walk blizzard-map blizzard-positions size rounds)]
+    (->> 0
+         (walk-fn start finish)
+         (walk-fn finish start)
+         (walk-fn start finish))))
 
 (defn -main
   []

@@ -15,4 +15,4 @@
 
 (deftest part2-test
   (testing "Part 2"
-    (is (= nil (part2 blizzard-map-example)))))
+    (is (= 54 (part2 blizzard-map-example)))))
